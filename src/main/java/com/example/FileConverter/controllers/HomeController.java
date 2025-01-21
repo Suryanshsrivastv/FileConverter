@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 @RestController
 @RequestMapping("/conv")
+@CrossOrigin
 public class HomeController {
 
     @RequestMapping("/welcome")
@@ -25,23 +26,57 @@ public class HomeController {
 
     // Conversion for PPT to PDF
     @PostMapping("/ppt-to-pdf")
-    public ResponseEntity<?> convertPptToPdf(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<String> convertPptToPdf(@RequestParam("file") MultipartFile file) {
         try {
             String outputFilePath = fileConversionService.convertPptToPdf(file);
-            return ResponseEntity.ok("File converted successfully. Path: " + outputFilePath);
+            return ResponseEntity.ok(outputFilePath);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error during conversion: " + e.getMessage());
         }
     }
 
-    // Conversion for any file type with the type parameter
-    @PostMapping("/convert")
-    public ResponseEntity<String> convertFile(@RequestParam("file") MultipartFile file, @RequestParam("type") String fileType) {
+//    // Conversion for any file type with the type parameter
+//    @PostMapping("/convert")
+//    public ResponseEntity<String> convertFile(@RequestParam("file") MultipartFile file, @RequestParam("type") String fileType) {
+//        try {
+//            String filePath = fileConversionService.convertFile(file, fileType);
+//            return ResponseEntity.status(HttpStatus.OK).body(filePath);
+//        } catch (IOException e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during conversion: " + e.getMessage());
+//        }
+//    }
+
+
+    // DOCX to PDF conversion
+    @PostMapping("/docx-to-pdf")
+    public ResponseEntity<String> convertDocxToPdf(@RequestParam("file") MultipartFile file) {
         try {
-            String filePath = fileConversionService.convertFile(file, fileType);
-            return ResponseEntity.status(HttpStatus.OK).body("File converted successfully. Download it at /conv/download/" + filePath);
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during conversion: " + e.getMessage());
+            String outputFilePath = fileConversionService.convertDocxToPdf(file);
+            return ResponseEntity.ok(outputFilePath);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error during conversion: " + e.getMessage());
+        }
+    }
+
+    // TXT to PDF conversion
+    @PostMapping("/txt-to-pdf")
+    public ResponseEntity<String> convertTxtToPdf(@RequestParam("file") MultipartFile file) {
+        try {
+            String outputFilePath = fileConversionService.convertTxtToPdf(file);
+            return ResponseEntity.ok(outputFilePath);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error during conversion: " + e.getMessage());
+        }
+    }
+
+    // PDF to DOCX conversion
+    @PostMapping("/pdf-to-docx")
+    public ResponseEntity<String> convertPdfToDocx(@RequestParam("file") MultipartFile file) {
+        try {
+            String outputFilePath = fileConversionService.convertPdfToDocx(file);
+            return ResponseEntity.ok(outputFilePath);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error during conversion: " + e.getMessage());
         }
     }
 
@@ -79,38 +114,4 @@ public class HomeController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
-
-    // DOCX to PDF conversion
-    @PostMapping("/docx-to-pdf")
-    public ResponseEntity<?> convertDocxToPdf(@RequestParam("file") MultipartFile file) {
-        try {
-            String outputFilePath = fileConversionService.convertDocxToPdf(file);
-            return ResponseEntity.ok("DOCX converted successfully. Path: " + outputFilePath);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error during conversion: " + e.getMessage());
-        }
-    }
-
-    // TXT to PDF conversion
-    @PostMapping("/txt-to-pdf")
-    public ResponseEntity<?> convertTxtToPdf(@RequestParam("file") MultipartFile file) {
-        try {
-            String outputFilePath = fileConversionService.convertTxtToPdf(file);
-            return ResponseEntity.ok("TXT converted successfully. Path: " + outputFilePath);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error during conversion: " + e.getMessage());
-        }
-    }
-
-    // PDF to DOCX conversion
-    @PostMapping("/pdf-to-docx")
-    public ResponseEntity<?> convertPdfToDocx(@RequestParam("file") MultipartFile file) {
-        try {
-            String outputFilePath = fileConversionService.convertPdfToDocx(file);
-            return ResponseEntity.ok("PDF converted successfully. Path: " + outputFilePath);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error during conversion: " + e.getMessage());
-        }
-    }
 }
-
