@@ -35,18 +35,6 @@ public class HomeController {
         }
     }
 
-//    // Conversion for any file type with the type parameter
-//    @PostMapping("/convert")
-//    public ResponseEntity<String> convertFile(@RequestParam("file") MultipartFile file, @RequestParam("type") String fileType) {
-//        try {
-//            String filePath = fileConversionService.convertFile(file, fileType);
-//            return ResponseEntity.status(HttpStatus.OK).body(filePath);
-//        } catch (IOException e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during conversion: " + e.getMessage());
-//        }
-//    }
-
-
     // DOCX to PDF conversion
     @PostMapping("/docx-to-pdf")
     public ResponseEntity<String> convertDocxToPdf(@RequestParam("file") MultipartFile file) {
