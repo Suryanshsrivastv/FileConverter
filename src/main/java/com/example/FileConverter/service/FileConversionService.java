@@ -1,40 +1,44 @@
 package com.example.FileConverter.service;
 
+import com.dropbox.core.DbxException;
+import com.dropbox.core.DbxRequestConfig;
+import com.dropbox.core.v2.DbxClientV2;
+import com.dropbox.core.v2.files.UploadErrorException;
+import com.dropbox.core.v2.files.WriteMode;
+import com.dropbox.core.v2.sharing.SharedLinkMetadata;
+import jakarta.annotation.PostConstruct;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
-import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.apache.poi.xslf.usermodel.XSLFSlide;
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+
 @Service
 public class FileConversionService {
+    @Value("${dropbox.access.token}")
+    private String dropboxAccessToken;
 
-    public String convertFile(MultipartFile file, String fileType) throws IOException {
-        switch (fileType.toLowerCase()) {
-            case "ppt":
-                return convertPptToPdf(file);
-            case "docx":
-                return convertDocxToPdf(file);
-            case "pdf":
-                return convertPdfToDocx(file);
-            default:
-                System.out.println("Unsupported file type: " + fileType);
-                throw new IllegalArgumentException("Unsupported file type: " + fileType);
-        }
+    private DbxClientV2 dropboxClient;
+
+    @PostConstruct
+    public void init() {
+        // Initialize Dropbox client with your access token
+        dropboxClient = new DbxClientV2(new DbxRequestConfig("Fileconverter88990"), dropboxAccessToken);
     }
 
-    public String convertPptToPdf(MultipartFile file) throws IOException {
+    public String convertPptToPdf(MultipartFile file) throws IOException, DbxException {
         XMLSlideShow ppt = new XMLSlideShow(file.getInputStream());
         String outputFilePath = "converted-" + System.currentTimeMillis() + ".pdf";
 
@@ -62,7 +66,7 @@ public class FileConversionService {
             throw new IOException("Error during PPT to PDF conversion: " + e.getMessage());
         }
 
-        return outputFilePath;
+        return uploadToDropbox(outputFilePath);
     }
 
     private File convertBufferedImageToFile(BufferedImage image) throws IOException {
@@ -76,7 +80,7 @@ public class FileConversionService {
         return tempFile;
     }
 
-    public String convertDocxToPdf(MultipartFile file) throws IOException {
+    public String convertDocxToPdf(MultipartFile file) throws IOException, DbxException {
         InputStream docxInputStream = file.getInputStream();
         String outputFilePath = "converted-" + System.currentTimeMillis() + ".pdf";
 
@@ -109,34 +113,30 @@ public class FileConversionService {
             throw new IOException("Error during DOCX to PDF conversion: " + e.getMessage());
         }
 
-        return outputFilePath;
+        return uploadToDropbox(outputFilePath);
     }
 
-    public String convertPdfToDocx(MultipartFile file) throws IOException {
+    public String convertPdfToDocx(MultipartFile file) throws IOException, DbxException {
+        // Convert PDF to DOCX
         PDDocument pdfDocument = PDDocument.load(file.getInputStream());
         String outputFilePath = "converted-" + System.currentTimeMillis() + ".docx";
 
         try (XWPFDocument docx = new XWPFDocument()) {
-            PDFTextStripper stripper = new PDFTextStripper();
-            String text = stripper.getText(pdfDocument);
-            String[] lines = text.split("\n");
-
-            for (String line : lines) {
+            String text = new org.apache.pdfbox.text.PDFTextStripper().getText(pdfDocument);
+            for (String line : text.split("\n")) {
                 docx.createParagraph().createRun().setText(line);
             }
 
             try (FileOutputStream out = new FileOutputStream(outputFilePath)) {
                 docx.write(out);
             }
-        } catch (IOException e) {
-            System.out.println("Error during PDF to DOCX conversion: " + e.getMessage());
-            throw new IOException("Error during PDF to DOCX conversion: " + e.getMessage());
         }
 
-        return outputFilePath;
+        // Upload the converted file to Dropbox
+        return uploadToDropbox(outputFilePath);
     }
 
-    public String convertTxtToPdf(MultipartFile file) throws IOException {
+    public String convertTxtToPdf(MultipartFile file) throws IOException, DbxException {
         InputStream txtInputStream = file.getInputStream();
         String outputFilePath = "converted-" + System.currentTimeMillis() + ".pdf";
 
@@ -166,6 +166,35 @@ public class FileConversionService {
             throw new IOException("Error during TXT to PDF conversion: " + e.getMessage());
         }
 
-        return outputFilePath;
+        return uploadToDropbox(outputFilePath);
+    }
+
+    public String uploadToDropbox(String filePath) throws IOException, DbxException {
+        File file = new File(filePath);
+        String dropboxPath = "/converted-files/" + file.getName();
+
+        // Upload file to Dropbox
+        try (InputStream fileStream = new FileInputStream(file)) {
+            dropboxClient.files().uploadBuilder(dropboxPath)
+                    .withMode(WriteMode.OVERWRITE)
+                    .uploadAndFinish(fileStream);
+        }
+
+        // Create a shared link with the "dl=1" query parameter to force download
+        SharedLinkMetadata sharedLink = dropboxClient.sharing()
+                .createSharedLinkWithSettings(dropboxPath);
+
+        // Modify the URL to force a download
+        String dropboxUrl = sharedLink.getUrl().replace("?dl=0", "?dl=1");
+
+        // Delete the local file after uploading to Dropbox
+        if (file.exists()) {
+            boolean deleted = file.delete();
+            if (!deleted) {
+                System.out.println("Failed to delete the local file: " + filePath);
+            }
+        }
+
+        return dropboxUrl;
     }
 }

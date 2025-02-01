@@ -11,6 +11,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/conv")
 @CrossOrigin
@@ -26,45 +29,77 @@ public class HomeController {
 
     // Conversion for PPT to PDF
     @PostMapping("/ppt-to-pdf")
-    public ResponseEntity<String> convertPptToPdf(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Map<String, String>> convertPptToPdf(@RequestParam("file") MultipartFile file) {
         try {
-            String outputFilePath = fileConversionService.convertPptToPdf(file);
-            return ResponseEntity.ok(outputFilePath);
+            // Convert the PPT file and get the Dropbox URL
+            String downloadUrl = fileConversionService.convertPptToPdf(file);
+
+            // Prepare the response
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "PPT to PDF conversion successful");
+            response.put("downloadUrl", downloadUrl);
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error during conversion: " + e.getMessage());
+            // Error response with exception message
+            return ResponseEntity.badRequest().body(Map.of("error", "Error during conversion: " + e.getMessage()));
         }
     }
 
     // DOCX to PDF conversion
     @PostMapping("/docx-to-pdf")
-    public ResponseEntity<String> convertDocxToPdf(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Map<String, String>> convertDocxToPdf(@RequestParam("file") MultipartFile file) {
         try {
-            String outputFilePath = fileConversionService.convertDocxToPdf(file);
-            return ResponseEntity.ok(outputFilePath);
+            // Convert the DOCX file and get the Dropbox URL
+            String downloadUrl = fileConversionService.convertDocxToPdf(file);
+
+            // Prepare the response
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "DOCX to PDF conversion successful");
+            response.put("downloadUrl", downloadUrl);
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error during conversion: " + e.getMessage());
+            // Error response with exception message
+            return ResponseEntity.badRequest().body(Map.of("error", "Error during conversion: " + e.getMessage()));
         }
     }
 
     // TXT to PDF conversion
     @PostMapping("/txt-to-pdf")
-    public ResponseEntity<String> convertTxtToPdf(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Map<String, String>> convertTxtToPdf(@RequestParam("file") MultipartFile file) {
         try {
-            String outputFilePath = fileConversionService.convertTxtToPdf(file);
-            return ResponseEntity.ok(outputFilePath);
+            // Convert the TXT file and get the Dropbox URL
+            String downloadUrl = fileConversionService.convertTxtToPdf(file);
+
+            // Prepare the response
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "TXT to PDF conversion successful");
+            response.put("downloadUrl", downloadUrl);
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error during conversion: " + e.getMessage());
+            // Error response with exception message
+            return ResponseEntity.badRequest().body(Map.of("error", "Error during conversion: " + e.getMessage()));
         }
     }
 
     // PDF to DOCX conversion
     @PostMapping("/pdf-to-docx")
-    public ResponseEntity<String> convertPdfToDocx(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Map<String, String>> convertPdfToDocx(@RequestParam("file") MultipartFile file) {
         try {
-            String outputFilePath = fileConversionService.convertPdfToDocx(file);
-            return ResponseEntity.ok(outputFilePath);
+            // Convert the PDF file and get the Dropbox URL
+            String downloadUrl = fileConversionService.convertPdfToDocx(file);
+
+            // Prepare the response
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "PDF to DOCX conversion successful");
+            response.put("downloadUrl", downloadUrl);
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error during conversion: " + e.getMessage());
+            // Error response with exception message
+            return ResponseEntity.badRequest().body(Map.of("error", "Error during conversion: " + e.getMessage()));
         }
     }
 
